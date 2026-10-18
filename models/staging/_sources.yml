@@ -1,0 +1,55 @@
+version: 2
+
+sources:
+  - name: raw_ecommerce
+    description: >
+      Raw e-commerce extracts loaded as-is. On BigQuery they come from the
+      original source files; locally and in CI they are produced by
+      `scripts/generate_sample_data.py` with the same schema.
+    database: "{{ var('raw_project', target.database) }}"
+    schema: "{{ var('raw_dataset', 'ecommerce_raw') }}"
+    tables:
+      - name: orders
+        description: "Orders, one row per order. Authoritative source for the order grain."
+        columns:
+          - name: date_date
+            description: "Order date."
+          - name: customers_id
+            description: "Customer identifier."
+            data_tests:
+              - not_null
+          - name: orders_id
+            description: "Unique order identifier."
+            data_tests:
+              - not_null
+              - unique
+          - name: net_sales
+            description: "Total net sales amount of the order."
+            data_tests:
+              - not_null
+
+      - name: sales
+        description: "Sales lines, one row per order and product."
+        columns:
+          - name: date_date
+            description: "Order date of the sales line."
+          - name: customer_id
+            description: "Customer identifier."
+            data_tests:
+              - not_null
+          - name: order_id
+            description: "Identifier of the related order."
+            data_tests:
+              - not_null
+          - name: products_id
+            description: "Product identifier."
+            data_tests:
+              - not_null
+          - name: net_sales
+            description: "Net sales amount of the product line."
+            data_tests:
+              - not_null
+          - name: qty
+            description: "Quantity of the product sold in the line."
+            data_tests:
+              - not_null

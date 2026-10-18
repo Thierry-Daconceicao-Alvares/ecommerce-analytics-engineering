@@ -1,0 +1,5 @@
+# BigQuery run with the original data.
+dbt-core==1.12.6
+dbt-bigquery==1.12.1
+pandas>=2.2
+openpyxl>=3.1

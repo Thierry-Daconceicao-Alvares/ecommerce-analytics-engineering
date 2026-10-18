@@ -1,0 +1,35 @@
+name: ecommerce_analytics
+version: '1.1.0'
+config-version: 2
+require-dbt-version: [">=1.10.0", "<2.0.0"]
+
+profile: ecommerce_analytics
+
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+
+clean-targets:
+  - target
+  - dbt_packages
+
+vars:
+  # Year analysed by the rpt_* models.
+  analysis_year: 2026
+
+models:
+  ecommerce_analytics:
+    # Every layer is materialized as a view: the BigQuery Sandbox used for the
+    # validated run expires tables and partitions after 60 days.
+    staging:
+      +materialized: view
+      +docs:
+        node_color: "#4C9BE8"
+    intermediate:
+      +materialized: view
+      +docs:
+        node_color: "#F2A541"
+    marts:
+      +materialized: view
+      +docs:
+        node_color: "#2E8B57"

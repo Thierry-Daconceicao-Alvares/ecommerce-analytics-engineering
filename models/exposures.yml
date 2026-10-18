@@ -1,0 +1,17 @@
+version: 2
+
+exposures:
+  - name: marketing_performance_dashboard
+    label: E-commerce Marketing Performance
+    type: dashboard
+    maturity: medium
+    url: https://datastudio.google.com/reporting/78ef8242-016f-4e9a-b9d2-32bd7bb1bd66
+    description: >
+      Looker Studio dashboard for marketing and e-commerce stakeholders: KPI
+      cards, monthly trends, customer segmentation, average units per order and
+      a combined orders and revenue time series. Specification in
+      `dashboard/dashboard_spec.md`.
+    depends_on:
+      - ref('fct_orders_dashboard')
+    owner:
+      name: Thierry Daconceição Alvares

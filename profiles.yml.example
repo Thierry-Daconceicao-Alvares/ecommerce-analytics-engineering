@@ -1,0 +1,15 @@
+# BigQuery profile. Copy to ~/.dbt/profiles.yml and replace the project ID.
+# Authentication uses your gcloud application-default credentials:
+#   gcloud auth application-default login
+ecommerce_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: oauth
+      project: YOUR_GCP_PROJECT_ID
+      dataset: ecommerce_analytics_dev
+      location: EU
+      threads: 4
+      timeout_seconds: 300
+      priority: interactive

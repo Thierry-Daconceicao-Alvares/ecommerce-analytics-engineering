@@ -1,0 +1,301 @@
+version: 2
+
+models:
+  - name: stg_orders
+    description: >
+      Staging model for orders: renamed and typed columns.
+      Grain: one row per order.
+    columns:
+      - name: order_id
+        description: Unique order identifier.
+        data_tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: Identifier of the customer who placed the order.
+        data_tests:
+          - not_null
+      - name: order_date
+        description: Order date.
+        data_tests:
+          - not_null
+      - name: order_net_sales
+        description: Total net sales amount of the order.
+        data_tests:
+          - not_null
+
+  - name: stg_sales
+    description: >
+      Staging model for sales lines: renamed and typed columns.
+      Grain: one row per order and product.
+    columns:
+      - name: order_id
+        description: Order identifier.
+        data_tests:
+          - not_null
+      - name: product_id
+        description: Identifier of the product sold.
+        data_tests:
+          - not_null
+      - name: quantity
+        description: Quantity sold for the product.
+        data_tests:
+          - not_null
+      - name: line_net_sales
+        description: Net sales amount of the product line.
+        data_tests:
+          - not_null
+
+  - name: int_sales_by_order
+    description: >
+      Sales lines aggregated to the order level before any join, which prevents
+      fan-out and double counting. Grain: one row per order present in sales.
+    columns:
+      - name: order_id
+        description: Unique order identifier.
+        data_tests:
+          - not_null
+          - unique
+      - name: qty_product
+        description: Total number of units sold in the order.
+        data_tests:
+          - not_null
+      - name: product_count
+        description: Number of distinct product references in the order.
+        data_tests:
+          - not_null
+      - name: sales_net_sales
+        description: Sum of the net sales amounts of the product lines.
+        data_tests:
+          - not_null
+
+  - name: int_orders_enriched
+    description: >
+      Orders enriched with their product aggregates and a reconciliation gap
+      against the sales lines. Grain: one row per order from the orders source.
+    columns:
+      - name: order_id
+        description: Unique order identifier.
+        data_tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: Customer identifier.
+        data_tests:
+          - not_null
+      - name: order_net_sales
+        description: Official net sales amount of the order.
+        data_tests:
+          - not_null
+      - name: qty_product
+        description: Total number of units sold in the order.
+        data_tests:
+          - not_null
+
+  - name: int_customer_order_history
+    description: >
+      Purchase history of every 2026 order: number of orders placed by the same
+      customer during the twelve months before the current order date
+      (same-day orders are not counted as previous orders).
+      Grain: one row per 2026 order.
+    columns:
+      - name: order_id
+        description: Unique order identifier.
+        data_tests:
+          - not_null
+          - unique
+      - name: previous_orders_12m
+        description: Number of previous orders placed by the customer over twelve months.
+        data_tests:
+          - not_null
+      - name: history_window_complete
+        description: >
+          True when the full twelve-month look-back window is covered by the
+          available data.
+        data_tests:
+          - not_null
+
+  - name: int_orders_segmented
+    description: >
+      2026 orders with their purchase history and customer segment.
+      Grain: one row per order.
+    columns:
+      - name: order_id
+        description: Unique order identifier.
+        data_tests:
+          - not_null
+          - unique
+      - name: order_segmentation
+        description: Customer segment of the order based on its purchase history.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['New', 'Returning', 'VIP']
+      - name: previous_orders_12m
+        description: Number of previous orders placed by the customer over twelve months.
+        data_tests:
+          - not_null
+
+  - name: fct_orders_2025_2026
+    description: >
+      Core order fact for 2025 and 2026. Grain: one row per order. Materialized
+      as a view because the BigQuery Sandbox applies a 60-day expiration to
+      tables and partitions.
+    columns:
+      - name: order_id
+        description: Unique order identifier.
+        data_tests:
+          - not_null
+          - unique
+      - name: order_date
+        description: Order date.
+        data_tests:
+          - not_null
+      - name: customer_id
+        description: Customer identifier.
+        data_tests:
+          - not_null
+      - name: order_net_sales
+        description: Total net sales amount of the order.
+        data_tests:
+          - not_null
+      - name: qty_product
+        description: Total number of units sold in the order.
+        data_tests:
+          - not_null
+
+  - name: fct_orders_2026_segmented
+    description: >
+      Analytical fact of 2026 orders with customer segmentation.
+      Grain: one row per order.
+    columns:
+      - name: order_id
+        description: Unique order identifier.
+        data_tests:
+          - not_null
+          - unique
+      - name: order_date
+        description: Order date.
+        data_tests:
+          - not_null
+      - name: customer_id
+        description: Customer identifier.
+        data_tests:
+          - not_null
+      - name: order_segmentation
+        description: Customer segment, New, Returning or VIP.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['New', 'Returning', 'VIP']
+      - name: previous_orders_12m
+        description: Number of previous orders placed by the customer over twelve months.
+        data_tests:
+          - not_null
+      - name: history_window_complete
+        description: >
+          True when the twelve months before the order are fully covered by the
+          period available in the sources.
+        data_tests:
+          - not_null
+
+  - name: rpt_annual_order_count
+    description: >
+      Total number of orders placed during the analysis year
+      (`analysis_year` variable, 2026 by default).
+    columns:
+      - name: analysis_year
+        description: Analysis year.
+        data_tests:
+          - not_null
+          - unique
+      - name: number_of_orders
+        description: Total number of orders placed during the analysis year.
+        data_tests:
+          - not_null
+
+  - name: rpt_monthly_order_count
+    description: >
+      Number of orders per month of the analysis year, with one row for every
+      month even when it has no orders.
+    columns:
+      - name: month_number
+        description: Month number, from 1 to 12.
+        data_tests:
+          - not_null
+          - unique
+      - name: month_name
+        description: Month name.
+        data_tests:
+          - not_null
+      - name: number_of_orders
+        description: Number of orders placed during the month.
+        data_tests:
+          - not_null
+
+  - name: rpt_monthly_avg_units_per_order
+    description: >
+      Average number of units sold per order (average of `qty_product` at the
+      order grain) for every month of the analysis year.
+    columns:
+      - name: month_number
+        description: Month number, from 1 to 12.
+        data_tests:
+          - not_null
+          - unique
+      - name: month_name
+        description: Month name.
+        data_tests:
+          - not_null
+      - name: number_of_orders
+        description: Number of orders placed during the month.
+        data_tests:
+          - not_null
+      - name: average_products_per_order
+        description: >
+          Average of `qty_product` at the order grain for the month, i.e. the
+          average number of units sold per order.
+
+  - name: fct_orders_dashboard
+    description: >
+      Unified mart feeding the LookML semantic layer and the Looker Studio
+      dashboard. Grain: one row per order over 2025-2026. Customer segmentation
+      is available for 2026 orders only.
+    columns:
+      - name: order_id
+        description: Unique order identifier.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: order_date
+        description: Order date.
+        data_tests:
+          - not_null
+
+      - name: customer_id
+        description: Customer identifier.
+        data_tests:
+          - not_null
+
+      - name: order_net_sales
+        description: Total net sales amount of the order.
+        data_tests:
+          - not_null
+
+      - name: qty_product
+        description: Total number of units sold in the order.
+        data_tests:
+          - not_null
+
+      - name: order_segmentation
+        description: >
+          Customer segment computed for 2026 orders. NULL for 2025 orders,
+          whose twelve-month history is not available.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['New', 'Returning', 'VIP']
+                quote: true

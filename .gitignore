@@ -1,0 +1,32 @@
+# dbt
+/target/
+/dbt_packages/
+/logs/
+
+# Credentials and local configuration
+# (profiles/profiles.yml is committed on purpose: DuckDB only, no secrets)
+/profiles.yml
+.user.yml
+.env
+*.json
+
+# Local DuckDB databases
+*.duckdb
+*.duckdb.wal
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Local source extracts used to load BigQuery
+/data_for_bigquery/
+
+# Local backup files
+*.bak
