@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dbt:
+    name: dbt build, tests and SQL lint (DuckDB)
+    runs-on: ubuntu-latest
+    env:
+      DBT_PROFILES_DIR: profiles
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate synthetic sample data
+        run: python scripts/generate_sample_data.py
+
+      - name: Build and test every model
+        run: dbt build --target local
+
+      - name: Lint SQL
+        run: sqlfluff lint models tests
+
+      - name: Generate documentation
+        run: dbt docs generate --target local
