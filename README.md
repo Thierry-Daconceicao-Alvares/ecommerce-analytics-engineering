@@ -176,12 +176,20 @@ Variables: `raw_project` (defaults to the target project), `raw_dataset` (defaul
 └── .github/workflows/      CI: build, tests, lint, docs
 ```
 
+## Known limitations
+
+- **The original data is not published.** The key results come from the original extracts loaded in BigQuery. The repository ships a generator of synthetic data with the same schema, so local and CI figures differ from the key results.
+- **No marketing or web data.** Without sessions, channels or ad spend, the project cannot measure ROI, attribution or conversion rates; the [dashboard specification](dashboard/dashboard_spec.md) states it on the page.
+- **Short history for early-2026 segments.** The data starts on 2025-07-09, so orders before July 2026 do not have a full 12-month look-back; `history_window_complete` flags them.
+- **Views, not incremental tables.** Fine at a few thousand orders; a production volume needs incremental facts, partitioned and clustered.
+- **The LookML layer is not deployed.** It is written and documented, but it has not been served or validated on a Looker instance; the Looker Studio dashboard reads the mart directly.
+- **One known data issue stays at the source.** The orphan sales order is surfaced by a warning-level test and excluded from order-level marts, not corrected upstream.
+
 ## Next steps for production
 
 - Incremental, partitioned and clustered fact tables.
 - Source freshness checks and model contracts on the marts.
 - Deploy the LookML project and point the dashboard at the Explore.
-- Host the dbt documentation on GitHub Pages.
 - Schedule the build with an orchestrator.
 
 ## Author

@@ -1,0 +1,63 @@
+# Publishes the dbt documentation (models, columns, tests and lineage graph),
+# built from the synthetic sample data, to GitHub Pages. Started manually;
+# requires Settings > Pages > Source: GitHub Actions.
+name: Documentation site
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build the dbt documentation (DuckDB, sample data)
+    runs-on: ubuntu-latest
+    env:
+      DBT_PROFILES_DIR: profiles
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate synthetic sample data
+        run: python scripts/generate_sample_data.py
+
+      - name: Build the models
+        run: dbt build --target local
+
+      - name: Generate the documentation as a single page
+        run: |
+          dbt docs generate --target local --static
+          mkdir -p site
+          cp target/static_index.html site/index.html
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
