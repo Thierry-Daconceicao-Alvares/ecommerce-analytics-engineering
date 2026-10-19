@@ -27,6 +27,8 @@ From raw order and sales extracts to tested dbt models, a governed LookML semant
 
 **[Open the Looker Studio dashboard](https://datastudio.google.com/reporting/78ef8242-016f-4e9a-b9d2-32bd7bb1bd66)**: built on the `fct_orders_dashboard` mart, with the data coverage and its analytical limits stated on the page ([specification](dashboard/dashboard_spec.md)).
 
+**[Browse the dbt documentation and lineage graph](https://thierry-daconceicao-alvares.github.io/ecommerce-analytics-engineering/)**: every model, column, test and source, published from the synthetic sample data by a GitHub Actions workflow on every push.
+
 ## What this project demonstrates
 
 | Skill | Where to look |

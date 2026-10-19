@@ -1,9 +1,10 @@
 # Publishes the dbt documentation (models, columns, tests and lineage graph),
-# built from the synthetic sample data, to GitHub Pages. Started manually;
-# requires Settings > Pages > Source: GitHub Actions.
+# built from the synthetic sample data, to GitHub Pages on every push to main.
 name: Documentation site
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
